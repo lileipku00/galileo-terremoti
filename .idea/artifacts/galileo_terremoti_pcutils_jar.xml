@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="galileo-terremoti-pcutils:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/galileo_terremoti_pcutils_jar</output-path>
+    <root id="archive" name="galileo-terremoti-pcutils.jar">
+      <element id="module-output" name="galileo-terremoti-pcutils" />
+    </root>
+  </artifact>
+</component>

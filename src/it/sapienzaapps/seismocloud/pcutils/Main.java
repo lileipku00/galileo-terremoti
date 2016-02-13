@@ -1,5 +1,6 @@
 package it.sapienzaapps.seismocloud.pcutils;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -14,14 +15,26 @@ public class Main {
 	public static void main(String[] args) {
 
 		if(args.length == 0) {
-			System.err.println("Parameters: <discovery|info|reboot|setgps> [macaddress|ipaddress] [lat] [lon]");
+			EventQueue.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					GUIMain ex = new GUIMain();
+					ex.setVisible(true);
+				}
+			});
 			return;
 		}
 
 		switch(args[0]) {
-			case "discovery": discovery(); break;
+			case "discovery": discovery(null); break;
 			case "info": info(args); break;
 			case "reboot": reboot(args); break;
+			case "help":
+			case "-help":
+			case "-h":
+			case "--help":
+				System.err.println("Parameters: <discovery|info|reboot|setgps> [macaddress|ipaddress] [lat] [lon]");
+				break;
 			//case "setgps": setgps(args); break;
 			default: break;
 		}
@@ -120,7 +133,7 @@ public class Main {
 		return null;
 	}
 
-	private static void discovery() {
+	protected static void discovery(IDiscoveryCallback callback) {
 		try {
 			initsocket();
 
@@ -136,10 +149,26 @@ public class Main {
 				if(pkt == null) continue;
 
 				byte[] buf = pkt.getData();
-				String version = new String(buf, 12, 4, "UTF-8");
-				String model = new String(buf, 16, 8, "UTF-8");
+				String version = new String(buf, 12, 4, "UTF-8").trim();
+				String model = new String(buf, 16, 8, "UTF-8").trim();
 				String mac = String.format("%02x:%02x:%02x:%02x:%02x:%02x", buf[6], buf[7], buf[8], buf[9], buf[10], buf[11]);
 				System.out.println("Arduino found at " + mac + " (" + pkt.getAddress() + ") model:" + model + " version:" + version);
+				if(callback != null) {
+					EventQueue.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							callback.onDeviceFound(mac, model, version, pkt.getAddress());
+						}
+					});
+				}
+			}
+			if(callback != null) {
+				EventQueue.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						callback.onDiscoveryEnded();
+					}
+				});
 			}
 		} catch(IOException e) {
 			e.printStackTrace();
