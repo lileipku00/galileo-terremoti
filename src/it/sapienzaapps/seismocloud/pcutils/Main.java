@@ -25,18 +25,14 @@ public class Main {
 			return;
 		}
 
-		switch(args[0]) {
-			case "discovery": discovery(null); break;
-			case "info": info(args); break;
-			case "reboot": reboot(args); break;
-			case "help":
-			case "-help":
-			case "-h":
-			case "--help":
-				System.err.println("Parameters: <discovery|info|reboot|setgps> [macaddress|ipaddress] [lat] [lon]");
-				break;
-			//case "setgps": setgps(args); break;
-			default: break;
+		if("discovery".equals(args[0])) {
+			discovery(null);
+		} else if("info".equals(args[0])) {
+			info(args);
+		} else if("reboot".equals(args[0])) {
+			reboot(args);
+		} else {
+			System.err.println("Parameters: <discovery|info|reboot|setgps> [macaddress|ipaddress] [lat] [lon]");
 		}
 	}
 
@@ -133,14 +129,14 @@ public class Main {
 		return null;
 	}
 
-	protected static void discovery(IDiscoveryCallback callback) {
+	protected static void discovery(final IDiscoveryCallback callback) {
 		try {
 			initsocket();
 
 			ds.send(prepareSimplePacket(1, null));
 
 			while(true) {
-				DatagramPacket pkt;
+				final DatagramPacket pkt;
 				try {
 					pkt = receivePacket();
 				} catch(SocketTimeoutException e) {
@@ -149,9 +145,9 @@ public class Main {
 				if(pkt == null) continue;
 
 				byte[] buf = pkt.getData();
-				String version = new String(buf, 12, 4, "UTF-8").trim();
-				String model = new String(buf, 16, 8, "UTF-8").trim();
-				String mac = String.format("%02x:%02x:%02x:%02x:%02x:%02x", buf[6], buf[7], buf[8], buf[9], buf[10], buf[11]);
+				final String version = new String(buf, 12, 4, "UTF-8").trim();
+				final String model = new String(buf, 16, 8, "UTF-8").trim();
+				final String mac = String.format("%02x:%02x:%02x:%02x:%02x:%02x", buf[6], buf[7], buf[8], buf[9], buf[10], buf[11]);
 				System.out.println("Arduino found at " + mac + " (" + pkt.getAddress() + ") model:" + model + " version:" + version);
 				if(callback != null) {
 					EventQueue.invokeLater(new Runnable() {

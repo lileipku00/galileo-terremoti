@@ -17,10 +17,10 @@ public class GUIMain extends JFrame {
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-		JTextArea logArea = new JTextArea();
+		final JTextArea logArea = new JTextArea();
 		logArea.setEditable(false);
 
-		JButton discoveryButton = new JButton("Discovery");
+		final JButton discoveryButton = new JButton("Discovery");
 		discoveryButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
