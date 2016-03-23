@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 public class Main {
 
 	private static DatagramSocket ds;
+	private static final String macRegex = "^([A-Za-z0-9]{2}[\\-:]){5}[A-Za-z0-9]{2}$";
 
 	public static void main(String[] args) {
 
@@ -31,8 +32,12 @@ public class Main {
 			info(args);
 		} else if("reboot".equals(args[0])) {
 			reboot(args);
+		} else if("reset".equals(args[0])) {
+			reset(args);
+		} else if("trace".equals(args[0])) {
+			trace(args);
 		} else {
-			System.err.println("Parameters: <discovery|info|reboot|setgps> [macaddress|ipaddress] [lat] [lon]");
+			System.err.println("Parameters: <discovery|info|reboot|reset|setgps> [macaddress|ipaddress] [lat] [lon]");
 		}
 	}
 
@@ -64,7 +69,7 @@ public class Main {
 			DatagramPacket pkt = new DatagramPacket(pktbuf, pktbuf.length);
 			ds.receive(pkt);
 			byte[] buf = pkt.getData();
-			if(buf[0] == 'I' && buf[1] == 'N' && buf[2] == 'G' && buf[3] == 'V' && buf[5] == 2) {
+			if(buf[0] == 'I' && buf[1] == 'N' && buf[2] == 'G' && buf[3] == 'V' && (buf[5] == 2 || buf[5] == 12)) {
 				return pkt;
 			} else {
 				return null;
@@ -82,7 +87,7 @@ public class Main {
 			return;
 		}
 
-		if(!args[1].matches("^([A-Za-z0-9]{2}[\\-:]){5}[A-Za-z0-9]{2}$")) {
+		if(!args[1].matches(macRegex)) {
 			System.err.println("Invalid MAC Address (specify as AA-BB-CC-DD-EE-FF or AA:BB:CC:DD:EE:FF)");
 			return;
 		}
@@ -100,6 +105,68 @@ public class Main {
 			}
 
 			ds.send(prepareSimplePacket(10, addr));
+
+			ds.close();
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void trace(String[] args) {
+		if(args.length < 2) {
+			System.err.println("Missing MAC Address (specify as AA-BB-CC-DD-EE-FF or AA:BB:CC:DD:EE:FF)");
+			return;
+		}
+
+		if(!args[1].matches(macRegex)) {
+			System.err.println("Invalid MAC Address (specify as AA-BB-CC-DD-EE-FF or AA:BB:CC:DD:EE:FF)");
+			return;
+		}
+
+		try {
+			String mac = args[1].replace(":-", "");
+			initsocket();
+
+			InetAddress addr = getAddressFromMac(mac);
+
+			if(addr == null) {
+				System.err.println("Cannot find " + mac + " in LAN");
+				ds.close();
+				return;
+			}
+
+			ds.send(prepareSimplePacket(14, addr));
+
+			ds.close();
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void reset(String[] args) {
+		if(args.length < 2) {
+			System.err.println("Missing MAC Address (specify as AA-BB-CC-DD-EE-FF or AA:BB:CC:DD:EE:FF)");
+			return;
+		}
+
+		if(!args[1].matches(macRegex)) {
+			System.err.println("Invalid MAC Address (specify as AA-BB-CC-DD-EE-FF or AA:BB:CC:DD:EE:FF)");
+			return;
+		}
+
+		try {
+			String mac = args[1].replace(":-", "");
+			initsocket();
+
+			InetAddress addr = getAddressFromMac(mac);
+
+			if(addr == null) {
+				System.err.println("Cannot find " + mac + " in LAN");
+				ds.close();
+				return;
+			}
+
+			ds.send(prepareSimplePacket(13, addr));
 
 			ds.close();
 		} catch(IOException e) {
@@ -177,7 +244,7 @@ public class Main {
 			return;
 		}
 
-		if(!args[1].matches("^([A-Z]{2}[\\-:]){5}[A-Z]{2}$")) {
+		if(!args[1].matches(macRegex)) {
 			System.err.println("Invalid MAC Address (specify as AA-BB-CC-DD-EE-FF or AA:BB:CC:DD:EE:FF)");
 			return;
 		}
@@ -234,6 +301,7 @@ public class Main {
 				System.out.println("ntpServer:" + ntpServer);
 				//System.out.println("Model:" + model);
 				System.out.println("Version:" + version);
+				break;
 			}
 
 			ds.close();
