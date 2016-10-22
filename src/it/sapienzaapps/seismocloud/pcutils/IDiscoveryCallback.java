@@ -7,8 +7,8 @@ import java.net.InetAddress;
  */
 public interface IDiscoveryCallback {
 
-	void onDeviceFound(String mac, String model, String version, InetAddress addr);
+    void onDeviceFound(String mac, String model, String version, InetAddress addr);
 
-	void onDiscoveryEnded();
+    void onDiscoveryEnded();
 
 }
